@@ -1,0 +1,10 @@
+campaign_manager.db
+logs/
+campaigns/
+exports/
+__pycache__/
+*.pyc
+*.pyo
+.env
+.key
+node_modules/
