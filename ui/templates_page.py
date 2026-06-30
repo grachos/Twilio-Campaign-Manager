@@ -12,15 +12,10 @@ from ui.dialogs import TemplateDialog
 
 
 class TemplatesPage(ctk.CTkFrame):
-    """Template management page.
-
-    Allows users to create, edit, delete, duplicate, and preview
-    Twilio Content Templates. Each template defines the content_sid,
-    variable placeholders, and example values.
-    """
+    """Template management page — light web style."""
 
     def __init__(self, parent, toolbar, **kwargs):
-        super().__init__(parent, fg_color=ThemeColors.BG_PRIMARY, **kwargs)
+        super().__init__(parent, fg_color="transparent", **kwargs)
         self.toolbar = toolbar
         self.template_service = TemplateService()
         self.export_service = ExportService()
@@ -35,11 +30,11 @@ class TemplatesPage(ctk.CTkFrame):
     def _build_ui(self) -> None:
         # Header
         header_frame = ctk.CTkFrame(self, fg_color="transparent")
-        header_frame.grid(row=0, column=0, sticky="ew", padx=20, pady=(20, 10))
+        header_frame.grid(row=0, column=0, sticky="ew", padx=4, pady=(4, 8))
         header_frame.grid_columnconfigure(0, weight=1)
 
         ctk.CTkLabel(header_frame, text=tr('content_templates'),
-                      font=ctk.CTkFont(size=20, weight="bold"),
+                      font=ctk.CTkFont(size=22, weight="bold"),
                       text_color=ThemeColors.FG_PRIMARY).grid(row=0, column=0, sticky="w")
 
         btn_frame = ctk.CTkFrame(header_frame, fg_color="transparent")
@@ -47,21 +42,24 @@ class TemplatesPage(ctk.CTkFrame):
 
         ctk.CTkButton(btn_frame, text=f"➕ {tr('new_template')}",
                        fg_color=ThemeColors.ACCENT, hover_color=ThemeColors.ACCENT_HOVER,
-                       command=self._new_template).grid(row=0, column=0, padx=5)
+                       text_color="#ffffff", corner_radius=6, height=32,
+                       command=self._new_template).grid(row=0, column=0, padx=4)
         ctk.CTkButton(btn_frame, text=f"🔄 {tr('refresh')}",
-                       fg_color=ThemeColors.BG_TERTIARY,
-                       command=self._refresh_list).grid(row=0, column=1, padx=5)
+                       fg_color=ThemeColors.FG_SECONDARY, text_color="#ffffff",
+                       corner_radius=6, height=32,
+                       command=self._refresh_list).grid(row=0, column=1, padx=4)
 
         # Main content
         content_frame = ctk.CTkFrame(self, fg_color="transparent")
-        content_frame.grid(row=1, column=0, sticky="nsew", padx=20, pady=5)
+        content_frame.grid(row=1, column=0, sticky="nsew", padx=4, pady=4)
         content_frame.grid_columnconfigure(0, weight=1)
         content_frame.grid_columnconfigure(1, weight=2)
         content_frame.grid_rowconfigure(0, weight=1)
 
         # Left panel - template list
-        list_frame = ctk.CTkFrame(content_frame, fg_color=ThemeColors.BG_SECONDARY, corner_radius=8)
-        list_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 10))
+        list_frame = ctk.CTkFrame(content_frame, fg_color=ThemeColors.BG_SECONDARY, corner_radius=8,
+                                   border_width=1, border_color=ThemeColors.BORDER)
+        list_frame.grid(row=0, column=0, sticky="nsew", padx=(0, 8))
         list_frame.grid_columnconfigure(0, weight=1)
         list_frame.grid_rowconfigure(1, weight=1)
 
@@ -86,11 +84,15 @@ class TemplatesPage(ctk.CTkFrame):
         self.tree.configure(yscrollcommand=vsb.set)
         vsb.grid(row=0, column=1, sticky="ns")
 
-        # Right panel - detail view
-        detail_frame = ctk.CTkFrame(content_frame, fg_color=ThemeColors.BG_SECONDARY, corner_radius=8)
+        # Right panel - scrollable detail view
+        detail_frame = ctk.CTkScrollableFrame(content_frame, fg_color=ThemeColors.BG_SECONDARY, corner_radius=8,
+                                               border_width=1, border_color=ThemeColors.BORDER)
         detail_frame.grid(row=0, column=1, sticky="nsew")
         detail_frame.grid_columnconfigure(0, weight=1)
-        detail_frame.grid_rowconfigure(5, weight=1)
+
+        inner = ctk.CTkFrame(detail_frame, fg_color="transparent")
+        inner.grid(row=0, column=0, sticky="nsew")
+        inner.grid_columnconfigure(0, weight=1)
 
         self.detail_labels = {}
         row = 0
@@ -100,41 +102,60 @@ class TemplatesPage(ctk.CTkFrame):
             ("content_sid", tr('content_sid')),
             ("variables", tr('variables')),
         ]:
-            ctk.CTkLabel(detail_frame, text=label,
+            ctk.CTkLabel(inner, text=label,
                           font=ctk.CTkFont(size=12, weight="bold"),
                           text_color=ThemeColors.FG_SECONDARY).grid(row=row, column=0, sticky="w", padx=20, pady=(15, 2))
             row += 1
-            lbl = ctk.CTkLabel(detail_frame, text="—",
+            lbl = ctk.CTkLabel(inner, text="—",
                                 font=ctk.CTkFont(size=13),
                                 text_color=ThemeColors.FG_PRIMARY, anchor="w", justify="left")
             lbl.grid(row=row, column=0, sticky="ew", padx=20, pady=(0, 5))
             self.detail_labels[key] = lbl
             row += 1
 
-        # Preview section
-        ctk.CTkLabel(detail_frame, text=tr('preview'),
+        # Example values (JSON)
+        ctk.CTkLabel(inner, text=tr('example_values'),
                       font=ctk.CTkFont(size=12, weight="bold"),
                       text_color=ThemeColors.FG_SECONDARY).grid(row=row, column=0, sticky="w", padx=20, pady=(15, 2))
         row += 1
-        self.preview_box = ctk.CTkTextbox(detail_frame, height=100,
-                                           fg_color=ThemeColors.INPUT_BG,
+        self.preview_box = ctk.CTkTextbox(inner, height=80,
+                                           fg_color=ThemeColors.BG_PRIMARY,
                                            text_color=ThemeColors.FG_PRIMARY)
-        self.preview_box.grid(row=row, column=0, sticky="ew", padx=20, pady=(0, 15))
+        self.preview_box.grid(row=row, column=0, sticky="ew", padx=20, pady=(0, 5))
         self.preview_box.insert("1.0", tr('select_template_preview'))
         self.preview_box.configure(state="disabled")
 
+        # Message body (Twilio template body with {{N}} variables)
         row += 1
-        action_frame = ctk.CTkFrame(detail_frame, fg_color="transparent")
-        action_frame.grid(row=row, column=0, pady=(0, 15))
+        ctk.CTkLabel(inner, text=tr('message_preview'),
+                      font=ctk.CTkFont(size=12, weight="bold"),
+                      text_color=ThemeColors.FG_SECONDARY).grid(row=row, column=0, sticky="w", padx=20, pady=(10, 2))
+        row += 1
+        self.rendered_preview = ctk.CTkTextbox(inner, height=120,
+                                                 fg_color=ThemeColors.BG_PRIMARY,
+                                                 text_color=ThemeColors.FG_PRIMARY)
+        self.rendered_preview.grid(row=row, column=0, sticky="ew", padx=20, pady=(0, 5))
+        self.rendered_preview.insert("1.0", tr('select_template_preview'))
+        self.rendered_preview.configure(state="disabled")
 
-        ctk.CTkButton(action_frame, text=f"✏ {tr('edit')}", fg_color=ThemeColors.INFO,
-                       command=self._edit_template).grid(row=0, column=0, padx=5)
-        ctk.CTkButton(action_frame, text=f"📋 {tr('duplicate')}", fg_color=ThemeColors.BG_TERTIARY,
-                       command=self._duplicate_template).grid(row=0, column=1, padx=5)
+        row += 1
+        action_frame = ctk.CTkFrame(inner, fg_color="transparent")
+        action_frame.grid(row=row, column=0, pady=(8, 15))
+
+        ctk.CTkButton(action_frame, text=f"✏ {tr('edit')}", fg_color=ThemeColors.ACCENT,
+                       text_color="#ffffff", corner_radius=6,
+                       command=self._edit_template).grid(row=0, column=0, padx=4)
+        ctk.CTkButton(action_frame, text=f"📋 {tr('duplicate')}", fg_color=ThemeColors.FG_SECONDARY,
+                       text_color="#ffffff", corner_radius=6,
+                       command=self._duplicate_template).grid(row=0, column=1, padx=4)
         ctk.CTkButton(action_frame, text=f"🗑 {tr('delete')}", fg_color=ThemeColors.DANGER,
-                       command=self._delete_template).grid(row=0, column=2, padx=5)
-        ctk.CTkButton(action_frame, text=f"📤 {tr('export')}", fg_color=ThemeColors.BG_TERTIARY,
-                       command=self._export_template).grid(row=0, column=3, padx=5)
+                       text_color="#ffffff", corner_radius=6,
+                       command=self._delete_template).grid(row=0, column=2, padx=4)
+        ctk.CTkButton(action_frame, text=f"📤 {tr('export')}", fg_color=ThemeColors.FG_SECONDARY,
+                       text_color="#ffffff", corner_radius=6,
+                       command=self._export_template).grid(row=0, column=3, padx=4)
+
+        inner.grid_rowconfigure(row, weight=0)
 
         self._selected_template_id: Optional[int] = None
 
@@ -165,12 +186,33 @@ class TemplatesPage(ctk.CTkFrame):
 
         self.preview_box.configure(state="normal")
         self.preview_box.delete("1.0", "end")
+        import json
+        show_examples = {}
+        body_text = ""
         if template.examples:
-            import json
-            self.preview_box.insert("1.0", json.dumps(template.examples, indent=2))
+            if isinstance(template.examples, dict):
+                show_examples = {k: v for k, v in template.examples.items() if k != "body"}
+                body_text = template.examples.get("body", "")
+            else:
+                show_examples = template.examples
+        if show_examples:
+            self.preview_box.insert("1.0", json.dumps(show_examples, indent=2))
         else:
             self.preview_box.insert("1.0", tr('no_example_values'))
         self.preview_box.configure(state="disabled")
+
+        self.rendered_preview.configure(state="normal")
+        self.rendered_preview.delete("1.0", "end")
+        if body_text:
+            rendered = body_text
+            for var in template.variables:
+                key = var.strip("{}").strip()
+                val = template.examples.get(key, f"[{key}]")
+                rendered = rendered.replace(f"{{{{{key}}}}}", str(val))
+            self.rendered_preview.insert("1.0", rendered)
+        else:
+            self.rendered_preview.insert("1.0", tr('no_example_values'))
+        self.rendered_preview.configure(state="disabled")
 
     def _new_template(self) -> None:
         from ui.dialogs import TemplateDialog
@@ -255,6 +297,10 @@ class TemplatesPage(ctk.CTkFrame):
         self.preview_box.delete("1.0", "end")
         self.preview_box.insert("1.0", tr('select_template_preview'))
         self.preview_box.configure(state="disabled")
+        self.rendered_preview.configure(state="normal")
+        self.rendered_preview.delete("1.0", "end")
+        self.rendered_preview.insert("1.0", tr('select_template_preview'))
+        self.rendered_preview.configure(state="disabled")
 
     def _export_template(self) -> None:
         if not self._selected_template_id:

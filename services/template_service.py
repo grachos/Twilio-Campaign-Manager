@@ -88,7 +88,7 @@ class TemplateService:
             placeholders[var] = value
 
         if template.examples:
-            preview = template.examples.get("preview", "")
+            preview = template.examples.get("body", "") or template.examples.get("preview", "")
             if not preview:
                 parts = []
                 for var in template.variables:

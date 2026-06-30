@@ -6,11 +6,7 @@ from utils.i18n import LanguageManager, tr
 
 
 class Sidebar(ctk.CTkFrame):
-    """Navigation sidebar with icon-based menu items.
-
-    Handles page navigation by calling registered callbacks when
-    a navigation item is clicked. Maintains active state highlight.
-    """
+    """Navigation sidebar — dark, compact, web-style."""
 
     NAV_ITEMS: Tuple[Tuple[str, str, str], ...] = (
         ("dashboard", "📊", "dashboard"),
@@ -31,22 +27,24 @@ class Sidebar(ctk.CTkFrame):
         self._build_ui()
 
     def _build_ui(self) -> None:
-        self.configure(width=200)
+        self.configure(width=220)
         self.grid_propagate(False)
 
-        title_frame = ctk.CTkFrame(self, fg_color="transparent")
-        title_frame.pack(fill="x", padx=15, pady=(25, 30))
+        # Logo / brand
+        logo_frame = ctk.CTkFrame(self, fg_color="transparent")
+        logo_frame.pack(fill="x", padx=18, pady=(28, 20))
 
-        ctk.CTkLabel(title_frame, text="📨", font=ctk.CTkFont(size=28)).pack()
-        ctk.CTkLabel(title_frame, text="Twilio CM",
-                      font=ctk.CTkFont(size=16, weight="bold"),
-                      text_color=ThemeColors.ACCENT).pack(pady=(5, 0))
+        ctk.CTkLabel(logo_frame, text="📨", font=ctk.CTkFont(size=26)).pack()
+        ctk.CTkLabel(logo_frame, text=tr("app_name"),
+                      font=ctk.CTkFont(size=14, weight="bold"),
+                      text_color=ThemeColors.SIDEBAR_TEXT).pack(pady=(4, 0))
 
-        separator = ctk.CTkFrame(self, height=2, fg_color=ThemeColors.BORDER)
-        separator.pack(fill="x", padx=15, pady=5)
+        sep = ctk.CTkFrame(self, height=1, fg_color="#1e293b")
+        sep.pack(fill="x", padx=16, pady=4)
 
+        # Navigation
         nav_frame = ctk.CTkFrame(self, fg_color="transparent")
-        nav_frame.pack(fill="both", expand=True, padx=10, pady=10)
+        nav_frame.pack(fill="both", expand=True, padx=12, pady=12)
 
         for page_id, icon, _ in self.NAV_ITEMS:
             label = tr(page_id)
@@ -55,36 +53,38 @@ class Sidebar(ctk.CTkFrame):
                 text=f"  {icon}  {label}",
                 anchor="w",
                 fg_color="transparent",
-                text_color=ThemeColors.FG_PRIMARY,
-                hover_color=ThemeColors.BG_TERTIARY,
+                text_color=ThemeColors.SIDEBAR_TEXT,
+                hover_color=ThemeColors.SIDEBAR_HOVER,
                 font=ctk.CTkFont(size=13),
                 corner_radius=8,
-                height=40,
+                height=38,
                 command=lambda pid=page_id: self._on_item_click(pid),
             )
-            btn.pack(fill="x", pady=2)
+            btn.pack(fill="x", pady=1)
             self._nav_buttons[page_id] = btn
 
-        separator2 = ctk.CTkFrame(self, height=2, fg_color=ThemeColors.BORDER)
-        separator2.pack(fill="x", padx=15, pady=5)
+        # Bottom: language toggle
+        sep2 = ctk.CTkFrame(self, height=1, fg_color="#1e293b")
+        sep2.pack(fill="x", padx=16, pady=4)
 
         lang_frame = ctk.CTkFrame(self, fg_color="transparent")
-        lang_frame.pack(fill="x", padx=10, pady=(0, 10))
+        lang_frame.pack(fill="x", padx=14, pady=(6, 14))
 
         current_lang = self._lang_mgr.lang
-        lang_text = "🇪🇸 Español" if current_lang == "en" else "🇬🇧 English"
+        lang_text = "🇪🇸  Español" if current_lang == "en" else "🇬🇧  English"
         self.lang_btn = ctk.CTkButton(
             lang_frame,
             text=lang_text,
             anchor="center",
-            fg_color=ThemeColors.BG_TERTIARY,
-            hover_color=ThemeColors.ACCENT_HOVER,
-            font=ctk.CTkFont(size=12),
-            corner_radius=8,
-            height=35,
+            fg_color="#1e293b",
+            hover_color="#334155",
+            text_color="#94a3b8",
+            font=ctk.CTkFont(size=11),
+            corner_radius=6,
+            height=32,
             command=self._toggle_language,
         )
-        self.lang_btn.pack(fill="x", padx=5)
+        self.lang_btn.pack(fill="x")
 
         self._set_active("dashboard")
 
@@ -96,18 +96,18 @@ class Sidebar(ctk.CTkFrame):
     def _set_active(self, page_id: str) -> None:
         if self._active_item and self._active_item in self._nav_buttons:
             prev = self._nav_buttons[self._active_item]
-            prev.configure(fg_color="transparent", text_color=ThemeColors.FG_PRIMARY)
+            prev.configure(fg_color="transparent", text_color=ThemeColors.SIDEBAR_TEXT)
 
         if page_id in self._nav_buttons:
             current = self._nav_buttons[page_id]
-            current.configure(fg_color=ThemeColors.BG_TERTIARY, text_color=ThemeColors.ACCENT)
+            current.configure(fg_color="#1e293b", text_color=ThemeColors.SIDEBAR_ACTIVE)
             self._active_item = page_id
 
     def _toggle_language(self) -> None:
         new_lang = "es" if self._lang_mgr.lang == "en" else "en"
         self._lang_mgr.lang = new_lang
         self.lang_btn.configure(
-            text="🇪🇸 Español" if new_lang == "en" else "🇬🇧 English"
+            text="🇪🇸  Español" if new_lang == "en" else "🇬🇧  English"
         )
         if self.on_language_toggle:
             self.on_language_toggle(new_lang)

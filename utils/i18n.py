@@ -3,7 +3,7 @@ from typing import Dict, Optional
 
 TRANSLATIONS: Dict[str, Dict[str, str]] = {
     "en": {
-        "app_name": "Twilio Campaign Manager",
+        "app_name": "Twilio MSJ Masivos",
         "dashboard": "Dashboard",
         "campaigns": "Campaigns",
         "templates": "Templates",
@@ -36,6 +36,9 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "content_sid": "Content SID",
         "variables": "Variables",
         "example_values": "Example Values (JSON)",
+        "message_preview": "Message Preview",
+        "message_body": "Message Body (Twilio format)",
+        "message_body_help": "Paste the Twilio template body with {{1}}, {{2}} variables",
         "duplicate": "Duplicate",
         "delete": "Delete",
         "refresh": "Refresh",
@@ -303,9 +306,9 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "variables_label": "Variables",
     },
     "es": {
-        "app_name": "Twilio Campaign Manager",
+        "app_name": "Twilio MSJ Masivos",
         "dashboard": "Panel",
-        "campaigns": "Campañas",
+        "campaigns": "MSJ Masivos",
         "templates": "Plantillas",
         "history": "Historial",
         "settings": "Configuración",
@@ -319,9 +322,9 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "export": "Exportar",
         "import": "Importar",
 
-        "new_campaign": "Nueva Campaña",
-        "edit_campaign": "Editar Campaña",
-        "campaign_name": "Nombre de Campaña",
+        "new_campaign": "Nuevo MSJ Masivo",
+        "edit_campaign": "Editar MSJ Masivo",
+        "campaign_name": "Nombre de MSJ Masivo",
         "campaign_description": "Descripción",
         "select_template": "Seleccionar Plantilla",
         "no_templates": "No hay plantillas disponibles",
@@ -336,6 +339,9 @@ TRANSLATIONS: Dict[str, Dict[str, str]] = {
         "content_sid": "Content SID",
         "variables": "Variables",
         "example_values": "Valores de Ejemplo (JSON)",
+        "message_preview": "Vista previa del mensaje",
+        "message_body": "Cuerpo del mensaje (formato Twilio)",
+        "message_body_help": "Pega el cuerpo de la plantilla de Twilio con variables {{1}}, {{2}}",
         "duplicate": "Duplicar",
         "delete": "Eliminar",
         "refresh": "Actualizar",

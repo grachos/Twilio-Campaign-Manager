@@ -15,10 +15,10 @@ from database.database import DatabaseManager
 
 
 class StatusBar(ctk.CTkFrame):
-    """Bottom status bar showing connection status, version, and current page."""
+    """Bottom status bar — light, slim, web-style."""
 
     def __init__(self, parent, **kwargs):
-        super().__init__(parent, fg_color=ThemeColors.BG_TERTIARY, height=30, **kwargs)
+        super().__init__(parent, fg_color=ThemeColors.BG_SECONDARY, height=32, **kwargs)
         self.grid_propagate(False)
         self._build_ui()
 
@@ -30,19 +30,19 @@ class StatusBar(ctk.CTkFrame):
             self, text=f"○ {tr('disconnected')}", font=ctk.CTkFont(size=11),
             text_color=ThemeColors.FG_SECONDARY,
         )
-        self.status_label.grid(row=0, column=0, padx=10, pady=2, sticky="w")
+        self.status_label.grid(row=0, column=0, padx=14, pady=2, sticky="w")
 
         self.page_label = ctk.CTkLabel(
             self, text=tr("dashboard"), font=ctk.CTkFont(size=11),
             text_color=ThemeColors.FG_SECONDARY,
         )
-        self.page_label.grid(row=0, column=1, padx=10, pady=2)
+        self.page_label.grid(row=0, column=1, padx=14, pady=2)
 
         self.version_label = ctk.CTkLabel(
             self, text=f"v{Settings.APP_VERSION}", font=ctk.CTkFont(size=10),
             text_color=ThemeColors.FG_SECONDARY,
         )
-        self.version_label.grid(row=0, column=2, padx=10, pady=2, sticky="e")
+        self.version_label.grid(row=0, column=2, padx=14, pady=2, sticky="e")
 
     def set_status(self, text: str, connected: bool = False) -> None:
         icon = "●" if connected else "○"
@@ -54,11 +54,7 @@ class StatusBar(ctk.CTkFrame):
 
 
 class MainWindow(ctk.CTk):
-    """Root application window.
-
-    Orchestrates the sidebar, toolbar, statusbar, and page views.
-    Manages navigation between pages and coordinates global actions.
-    """
+    """Root application window — light web-app style."""
 
     def __init__(self) -> None:
         super().__init__()
@@ -66,7 +62,7 @@ class MainWindow(ctk.CTk):
         self.db = DatabaseManager()
         self.logger = AppLogger()
 
-        self.title(self.config.app_name)
+        self.title(tr("app_name"))
         self.geometry(f"{Settings.WINDOW_MIN_WIDTH}x{Settings.WINDOW_MIN_HEIGHT}")
         self.minsize(Settings.WINDOW_MIN_WIDTH, Settings.WINDOW_MIN_HEIGHT)
 
@@ -79,15 +75,14 @@ class MainWindow(ctk.CTk):
         self.logger.info(f"{self.config.app_name} v{self.config.app_version} started")
 
     def _configure_theme(self) -> None:
-        mode = self.config.get("THEME_MODE", "Dark")
-        ctk.set_appearance_mode(mode)
-        theme = self.config.get("COLOR_THEME", "green")
-        ctk.set_default_color_theme(theme)
+        ctk.set_appearance_mode("Light")
+        ctk.set_default_color_theme("blue")
         self.configure(fg_color=ThemeColors.BG_PRIMARY)
 
     def _build_layout(self) -> None:
         self.grid_columnconfigure(0, weight=0)
         self.grid_columnconfigure(1, weight=1)
+        self.grid_rowconfigure(0, weight=0)
         self.grid_rowconfigure(1, weight=1)
         self.grid_rowconfigure(2, weight=0)
 
@@ -95,20 +90,20 @@ class MainWindow(ctk.CTk):
         self.sidebar.grid(row=0, column=0, rowspan=3, sticky="nsw")
 
         self.toolbar = Toolbar(self)
-        self.toolbar.grid(row=0, column=1, sticky="ew", padx=10, pady=(10, 0))
+        self.toolbar.grid(row=0, column=1, sticky="ew", padx=(0, 16), pady=(8, 0))
 
         self.content_frame = ctk.CTkFrame(self, fg_color="transparent")
-        self.content_frame.grid(row=1, column=1, sticky="nsew", padx=10, pady=5)
+        self.content_frame.grid(row=1, column=1, sticky="nsew", padx=16, pady=8)
         self.content_frame.grid_columnconfigure(0, weight=1)
         self.content_frame.grid_rowconfigure(0, weight=1)
 
         self.statusbar = StatusBar(self)
-        self.statusbar.grid(row=2, column=1, sticky="ew", padx=10, pady=(0, 10))
+        self.statusbar.grid(row=2, column=1, sticky="ew", padx=16, pady=(0, 8))
 
     def _build_pages(self) -> None:
         self.pages: Dict[str, ctk.CTkFrame] = {}
 
-        self.pages["dashboard"] = ctk.CTkFrame(self.content_frame, fg_color=ThemeColors.BG_PRIMARY)
+        self.pages["dashboard"] = ctk.CTkFrame(self.content_frame, fg_color="transparent")
         self._build_dashboard_page(self.pages["dashboard"])
 
         self.pages["campaigns"] = CampaignPage(self.content_frame, self.toolbar, self.statusbar)
@@ -125,60 +120,63 @@ class MainWindow(ctk.CTk):
 
     def _build_dashboard_page(self, parent) -> None:
         parent.grid_columnconfigure((0, 1, 2, 3), weight=1)
-        parent.grid_rowconfigure(1, weight=1)
+        parent.grid_rowconfigure(1, weight=0)
+        parent.grid_rowconfigure(2, weight=0)
 
         header = ctk.CTkLabel(
             parent, text=tr("dashboard_title"), font=ctk.CTkFont(size=22, weight="bold"),
             text_color=ThemeColors.FG_PRIMARY,
         )
-        header.grid(row=0, column=0, columnspan=4, sticky="w", padx=20, pady=(20, 15))
+        header.grid(row=0, column=0, columnspan=4, sticky="w", padx=4, pady=(4, 20))
 
         self._dashboard_cards = {}
         card_configs = [
-            ("today_campaigns", f"📊 {tr('todays_campaigns')}", "0", ThemeColors.ACCENT),
-            ("total_sent", f"✅ {tr('messages_sent')}", "0", ThemeColors.INFO),
-            ("total_failures", f"❌ {tr('total_failures')}", "0", ThemeColors.DANGER),
-            ("pending", f"⏳ {tr('pending')}", "0", ThemeColors.WARNING),
+            ("today_campaigns", "📊", tr('todays_campaigns'), "0", ThemeColors.ACCENT),
+            ("total_sent", "✅", tr('messages_sent'), "0", ThemeColors.SUCCESS),
+            ("total_failures", "❌", tr('total_failures'), "0", ThemeColors.DANGER),
+            ("pending", "⏳", tr('pending'), "0", ThemeColors.WARNING),
         ]
 
-        for i, (key, title, value, color) in enumerate(card_configs):
-            card = self._create_card(parent, title, value, color)
-            card.grid(row=1, column=i, sticky="nsew", padx=10, pady=10)
+        for i, (key, icon, title, value, color) in enumerate(card_configs):
+            card = self._create_card(parent, icon, title, value, color)
+            card.grid(row=1, column=i, sticky="nsew", padx=6, pady=4)
             self._dashboard_cards[key] = card
 
-        stats_frame = ctk.CTkFrame(parent, fg_color=ThemeColors.BG_SECONDARY)
-        stats_frame.grid(row=2, column=0, columnspan=4, sticky="nsew", padx=10, pady=10)
+        stats_frame = ctk.CTkFrame(parent, fg_color=ThemeColors.BG_SECONDARY, corner_radius=10)
+        stats_frame.grid(row=2, column=0, columnspan=4, sticky="nsew", padx=6, pady=(16, 4))
         stats_frame.grid_columnconfigure(1, weight=1)
+        stats_frame.grid_columnconfigure(3, weight=1)
 
         ctk.CTkLabel(stats_frame, text=f"{tr('total_campaigns')}:",
-                      font=ctk.CTkFont(size=13)).grid(row=0, column=0, sticky="w", padx=20, pady=10)
+                      font=ctk.CTkFont(size=13)).grid(row=0, column=0, sticky="w", padx=20, pady=12)
         self._total_campaigns_label = ctk.CTkLabel(
             stats_frame, text="0", font=ctk.CTkFont(size=13, weight="bold"),
             text_color=ThemeColors.ACCENT)
-        self._total_campaigns_label.grid(row=0, column=1, sticky="w", padx=5, pady=10)
+        self._total_campaigns_label.grid(row=0, column=1, sticky="w", padx=5, pady=12)
 
         ctk.CTkLabel(stats_frame, text=f"{tr('avg_delivery_time')}:",
-                      font=ctk.CTkFont(size=13)).grid(row=0, column=2, sticky="w", padx=20, pady=10)
+                      font=ctk.CTkFont(size=13)).grid(row=0, column=2, sticky="w", padx=20, pady=12)
         self._avg_delivery_label = ctk.CTkLabel(
             stats_frame, text="0s", font=ctk.CTkFont(size=13, weight="bold"),
             text_color=ThemeColors.ACCENT)
-        self._avg_delivery_label.grid(row=0, column=3, sticky="w", padx=5, pady=10)
+        self._avg_delivery_label.grid(row=0, column=3, sticky="w", padx=5, pady=12)
 
         self._refresh_dashboard()
 
-    def _create_card(self, parent, title: str, value: str, accent_color: str) -> ctk.CTkFrame:
-        card = ctk.CTkFrame(parent, fg_color=ThemeColors.CARD_BG, corner_radius=12)
+    def _create_card(self, parent, icon: str, title: str, value: str, accent_color: str) -> ctk.CTkFrame:
+        card = ctk.CTkFrame(parent, fg_color=ThemeColors.BG_SECONDARY, corner_radius=10,
+                             border_width=1, border_color=ThemeColors.BORDER)
         card.grid_columnconfigure(0, weight=1)
 
         inner = ctk.CTkFrame(card, fg_color="transparent")
-        inner.pack(fill="both", expand=True, padx=15, pady=15)
+        inner.pack(fill="both", expand=True, padx=16, pady=14)
 
-        ctk.CTkLabel(inner, text=title, font=ctk.CTkFont(size=12),
+        ctk.CTkLabel(inner, text=f"{icon}  {title}", font=ctk.CTkFont(size=13),
                       text_color=ThemeColors.FG_SECONDARY).pack(anchor="w")
         value_label = ctk.CTkLabel(inner, text=value,
                                     font=ctk.CTkFont(size=28, weight="bold"),
                                     text_color=accent_color)
-        value_label.pack(anchor="w", pady=(5, 0))
+        value_label.pack(anchor="w", pady=(6, 0))
 
         card.value_label = value_label
         return card
@@ -215,7 +213,6 @@ class MainWindow(ctk.CTk):
         self.after(5000, self._refresh_dashboard)
 
     def _register_callbacks(self) -> None:
-        self.toolbar.register_callback("new", self._on_new)
         self.toolbar.register_callback("export", self._on_export)
 
     def _load_settings(self) -> None:
@@ -259,13 +256,6 @@ class MainWindow(ctk.CTk):
         self.logger.info(f"Language changed to {new_lang}")
         from tkinter import messagebox
         messagebox.showinfo(tr("info"), tr("restart_required"))
-
-    def _on_new(self) -> None:
-        current_page = self.statusbar.page_label.cget("text").lower()
-        if current_page == "campaigns" and "campaigns" in self.pages:
-            self.pages["campaigns"]._new_campaign()
-        elif current_page == "templates" and "templates" in self.pages:
-            self.pages["templates"]._new_template()
 
     def _on_export(self) -> None:
         current = self.statusbar.page_label.cget("text").lower()

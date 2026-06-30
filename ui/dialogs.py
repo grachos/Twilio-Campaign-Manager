@@ -8,7 +8,7 @@ from utils.i18n import tr
 
 
 class BaseDialog(ctk.CTkToplevel):
-    """Base class for all modal dialogs with dark theme."""
+    """Base class for all modal dialogs — light theme."""
 
     def __init__(self, parent, title: str, width: int = 500, height: int = 400):
         super().__init__(parent)
@@ -88,10 +88,10 @@ class CampaignDialog(BaseDialog):
         btn_frame.grid(row=row, column=0, pady=25)
         btn_frame.grid_columnconfigure((0, 1), weight=1)
 
-        ctk.CTkButton(btn_frame, text=tr('cancel'), fg_color=ThemeColors.BG_TERTIARY,
-                       hover_color="#1a1a4e", width=120, command=self._cancel).grid(row=0, column=0, padx=10)
+        ctk.CTkButton(btn_frame, text=tr('cancel'), fg_color=ThemeColors.FG_SECONDARY,
+                       text_color="#ffffff", corner_radius=6, width=120, command=self._cancel).grid(row=0, column=0, padx=8)
         ctk.CTkButton(btn_frame, text=tr('save'), fg_color=ThemeColors.ACCENT,
-                       hover_color=ThemeColors.ACCENT_HOVER, width=120, command=self._save).grid(row=0, column=1, padx=10)
+                       text_color="#ffffff", corner_radius=6, width=120, command=self._save).grid(row=0, column=1, padx=8)
 
     def _populate(self, data: Dict) -> None:
         self.name_entry.delete(0, "end")
@@ -120,7 +120,7 @@ class TemplateDialog(BaseDialog):
 
     def __init__(self, parent, template_data: Optional[Dict] = None):
         title = tr('edit_template') if template_data else tr('new_template')
-        super().__init__(parent, title, width=600, height=550)
+        super().__init__(parent, title, width=620, height=600)
         self.template_data = template_data
         self.result: Optional[Dict] = None
         self._build_ui()
@@ -129,52 +129,69 @@ class TemplateDialog(BaseDialog):
 
     def _build_ui(self) -> None:
         self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=1)
+
+        scroll = ctk.CTkScrollableFrame(self, fg_color="transparent")
+        scroll.grid(row=0, column=0, sticky="nsew")
+        scroll.grid_columnconfigure(0, weight=1)
 
         row = 0
-        ctk.CTkLabel(self, text=tr('template_name'), anchor="w",
+        ctk.CTkLabel(scroll, text=tr('template_name'), anchor="w",
                       font=ctk.CTkFont(size=13)).grid(row=row, column=0, sticky="w", padx=20, pady=(20, 5))
         row += 1
-        self.name_entry = ctk.CTkEntry(self, placeholder_text=tr('eg_shipment_notification'))
+        self.name_entry = ctk.CTkEntry(scroll, placeholder_text=tr('eg_shipment_notification'))
         self.name_entry.grid(row=row, column=0, sticky="ew", padx=20, pady=5)
 
         row += 1
-        ctk.CTkLabel(self, text=tr('description'), anchor="w",
+        ctk.CTkLabel(scroll, text=tr('description'), anchor="w",
                       font=ctk.CTkFont(size=13)).grid(row=row, column=0, sticky="w", padx=20, pady=(15, 5))
         row += 1
-        self.desc_entry = ctk.CTkEntry(self, placeholder_text=tr('template_description'))
+        self.desc_entry = ctk.CTkEntry(scroll, placeholder_text=tr('template_description'))
         self.desc_entry.grid(row=row, column=0, sticky="ew", padx=20, pady=5)
 
         row += 1
-        ctk.CTkLabel(self, text=tr('content_sid'), anchor="w",
+        ctk.CTkLabel(scroll, text=tr('content_sid'), anchor="w",
                       font=ctk.CTkFont(size=13)).grid(row=row, column=0, sticky="w", padx=20, pady=(15, 5))
         row += 1
-        self.sid_entry = ctk.CTkEntry(self, placeholder_text=tr('eg_content_sid'))
+        self.sid_entry = ctk.CTkEntry(scroll, placeholder_text=tr('eg_content_sid'))
         self.sid_entry.grid(row=row, column=0, sticky="ew", padx=20, pady=5)
 
         row += 1
-        ctk.CTkLabel(self, text=tr('variables_label'),
+        ctk.CTkLabel(scroll, text=tr('variables_label'),
                       anchor="w", font=ctk.CTkFont(size=13)).grid(row=row, column=0, sticky="w", padx=20, pady=(15, 5))
         row += 1
-        self.vars_entry = ctk.CTkEntry(self, placeholder_text="{{1}}, {{2}}, {{3}}")
+        self.vars_entry = ctk.CTkEntry(scroll, placeholder_text="{{1}}, {{2}}, {{3}}")
         self.vars_entry.grid(row=row, column=0, sticky="ew", padx=20, pady=5)
 
         row += 1
-        ctk.CTkLabel(self, text=tr('example_values'),
+        ctk.CTkLabel(scroll, text=tr('example_values'),
                       anchor="w", font=ctk.CTkFont(size=13)).grid(row=row, column=0, sticky="w", padx=20, pady=(15, 5))
         row += 1
-        self.examples_text = ctk.CTkTextbox(self, height=80)
+        self.examples_text = ctk.CTkTextbox(scroll, height=80)
         self.examples_text.grid(row=row, column=0, sticky="ew", padx=20, pady=5)
         self.examples_text.insert("1.0", '{"1": "John", "2": "Order 55", "3": "TRK-123"}')
 
         row += 1
-        btn_frame = ctk.CTkFrame(self, fg_color="transparent")
+        ctk.CTkLabel(scroll, text=tr('message_body'),
+                      anchor="w", font=ctk.CTkFont(size=13)).grid(row=row, column=0, sticky="w", padx=20, pady=(15, 5))
+        row += 1
+        ctk.CTkLabel(scroll, text=tr('message_body_help'),
+                      anchor="w", font=ctk.CTkFont(size=11),
+                      text_color=ThemeColors.FG_SECONDARY).grid(row=row, column=0, sticky="w", padx=20, pady=(0, 5))
+        row += 1
+        self.body_text = ctk.CTkTextbox(scroll, height=100)
+        self.body_text.grid(row=row, column=0, sticky="ew", padx=20, pady=5)
+        self.body_text.insert("1.0", "")
+
+        row += 1
+        btn_frame = ctk.CTkFrame(scroll, fg_color="transparent")
         btn_frame.grid(row=row, column=0, pady=20)
         btn_frame.grid_columnconfigure((0, 1), weight=1)
 
-        ctk.CTkButton(btn_frame, text=tr('cancel'), fg_color=ThemeColors.BG_TERTIARY,
-                       hover_color="#1a1a4e", width=120, command=self._cancel).grid(row=0, column=0, padx=10)
+        ctk.CTkButton(btn_frame, text=tr('cancel'), fg_color=ThemeColors.FG_SECONDARY,
+                       text_color="#ffffff", corner_radius=6, width=120, command=self._cancel).grid(row=0, column=0, padx=8)
         ctk.CTkButton(btn_frame, text=tr('save'), fg_color=ThemeColors.ACCENT,
-                       hover_color=ThemeColors.ACCENT_HOVER, width=120, command=self._save).grid(row=0, column=1, padx=10)
+                       text_color="#ffffff", corner_radius=6, width=120, command=self._save).grid(row=0, column=1, padx=8)
 
     def _populate(self, data: Dict) -> None:
         self.name_entry.delete(0, "end")
@@ -186,10 +203,18 @@ class TemplateDialog(BaseDialog):
         variables = data.get("variables", [])
         self.vars_entry.delete(0, "end")
         self.vars_entry.insert(0, ", ".join(variables))
-        examples = data.get("examples", {})
         import json
+        raw = data.get("examples", {})
+        if isinstance(raw, dict):
+            body = raw.get("body", "")
+            show = {k: v for k, v in raw.items() if k != "body"}
+        else:
+            body = ""
+            show = raw
         self.examples_text.delete("1.0", "end")
-        self.examples_text.insert("1.0", json.dumps(examples, indent=2))
+        self.examples_text.insert("1.0", json.dumps(show, indent=2) if show else "{}")
+        self.body_text.delete("1.0", "end")
+        self.body_text.insert("1.0", body)
 
     def _save(self) -> None:
         name = self.name_entry.get().strip()
@@ -213,6 +238,10 @@ class TemplateDialog(BaseDialog):
             except json.JSONDecodeError:
                 messagebox.showwarning(tr('validation'), tr('invalid_json_examples'), parent=self)
                 return
+
+        body_text = self.body_text.get("1.0", "end").strip()
+        if body_text:
+            examples["body"] = body_text
 
         self.result = {
             "name": name,
@@ -238,7 +267,7 @@ class ImportDialog(BaseDialog):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(3, weight=1)
 
-        tab_view = ctk.CTkTabview(self, fg_color=ThemeColors.BG_SECONDARY)
+        tab_view = ctk.CTkTabview(self, fg_color=ThemeColors.BG_TERTIARY)
         tab_view.grid(row=0, column=0, sticky="ew", padx=20, pady=(20, 10))
 
         csv_tab = tab_view.add("CSV")
@@ -267,10 +296,10 @@ class ImportDialog(BaseDialog):
 
         btn_frame = ctk.CTkFrame(self, fg_color="transparent")
         btn_frame.grid(row=4, column=0, pady=15)
-        ctk.CTkButton(btn_frame, text=tr('cancel'), fg_color=ThemeColors.BG_TERTIARY,
-                       width=120, command=self._cancel).grid(row=0, column=0, padx=10)
+        ctk.CTkButton(btn_frame, text=tr('cancel'), fg_color=ThemeColors.FG_SECONDARY,
+                       text_color="#ffffff", corner_radius=6, width=120, command=self._cancel).grid(row=0, column=0, padx=8)
         ctk.CTkButton(btn_frame, text=tr('import_data'), fg_color=ThemeColors.ACCENT,
-                       width=120, command=self._import_data).grid(row=0, column=1, padx=10)
+                       text_color="#ffffff", corner_radius=6, width=120, command=self._import_data).grid(row=0, column=1, padx=8)
 
     def _browse_file(self, fmt: str) -> None:
         ext_map = {"csv": "*.csv", "excel": "*.xlsx *.xls", "json": "*.json"}
@@ -339,10 +368,10 @@ class SettingsDialog(BaseDialog):
 
         btn_frame = ctk.CTkFrame(self, fg_color="transparent")
         btn_frame.grid(row=row, column=0, columnspan=2, pady=20)
-        ctk.CTkButton(btn_frame, text=tr('cancel'), fg_color=ThemeColors.BG_TERTIARY,
-                       width=120, command=self._cancel).grid(row=0, column=0, padx=10)
+        ctk.CTkButton(btn_frame, text=tr('cancel'), fg_color=ThemeColors.FG_SECONDARY,
+                       text_color="#ffffff", corner_radius=6, width=120, command=self._cancel).grid(row=0, column=0, padx=8)
         ctk.CTkButton(btn_frame, text=tr('save'), fg_color=ThemeColors.ACCENT,
-                       width=120, command=self._save).grid(row=0, column=1, padx=10)
+                       text_color="#ffffff", corner_radius=6, width=120, command=self._save).grid(row=0, column=1, padx=8)
 
     def _save(self) -> None:
         self.result = {key: entry.get() for key, entry in self._entries.items()}
@@ -366,6 +395,7 @@ class AboutDialog(BaseDialog):
                       font=ctk.CTkFont(size=11),
                       text_color=ThemeColors.FG_SECONDARY).pack(pady=5)
         ctk.CTkButton(self, text=tr('close'), fg_color=ThemeColors.ACCENT,
+                       text_color="#ffffff", corner_radius=6,
                        command=self.destroy).pack(pady=30)
 
 
@@ -387,7 +417,9 @@ class SelectColumnsDialog(BaseDialog):
                       font=ctk.CTkFont(size=12)).grid(row=0, column=0, sticky="w", padx=20, pady=(20, 5))
         self.phone_var = ctk.StringVar(value=self.columns[0] if self.columns else "")
         ctk.CTkOptionMenu(self, variable=self.phone_var, values=self.columns,
-                           fg_color=ThemeColors.INPUT_BG, button_color=ThemeColors.ACCENT
+                           fg_color=ThemeColors.BG_PRIMARY, button_color=ThemeColors.ACCENT,
+                           text_color=ThemeColors.FG_PRIMARY, dropdown_fg_color=ThemeColors.BG_SECONDARY,
+                           dropdown_text_color=ThemeColors.FG_PRIMARY, dropdown_hover_color=ThemeColors.BG_TERTIARY
                            ).grid(row=0, column=1, sticky="ew", padx=20, pady=(20, 5))
 
         row = 1
@@ -397,7 +429,9 @@ class SelectColumnsDialog(BaseDialog):
             var_menu = ctk.CTkOptionMenu(
                 self,
                 values=[tr('skip')] + self.columns,
-                fg_color=ThemeColors.INPUT_BG, button_color=ThemeColors.ACCENT,
+                fg_color=ThemeColors.BG_PRIMARY, button_color=ThemeColors.ACCENT,
+                text_color=ThemeColors.FG_PRIMARY, dropdown_fg_color=ThemeColors.BG_SECONDARY,
+                dropdown_text_color=ThemeColors.FG_PRIMARY, dropdown_hover_color=ThemeColors.BG_TERTIARY,
             )
             idx = row - 1
             if idx < len(self.columns):
@@ -408,10 +442,10 @@ class SelectColumnsDialog(BaseDialog):
 
         btn_frame = ctk.CTkFrame(self, fg_color="transparent")
         btn_frame.grid(row=row, column=0, columnspan=2, pady=20)
-        ctk.CTkButton(btn_frame, text=tr('cancel'), fg_color=ThemeColors.BG_TERTIARY,
-                       width=120, command=self._cancel).grid(row=0, column=0, padx=10)
+        ctk.CTkButton(btn_frame, text=tr('cancel'), fg_color=ThemeColors.FG_SECONDARY,
+                       text_color="#ffffff", corner_radius=6, width=120, command=self._cancel).grid(row=0, column=0, padx=8)
         ctk.CTkButton(btn_frame, text=tr('confirm'), fg_color=ThemeColors.ACCENT,
-                       width=120, command=self._confirm).grid(row=0, column=1, padx=10)
+                       text_color="#ffffff", corner_radius=6, width=120, command=self._confirm).grid(row=0, column=1, padx=8)
 
     def _confirm(self) -> None:
         mapping = {"phone": self.phone_var.get()}
@@ -438,7 +472,7 @@ class DataPreviewDialog(BaseDialog):
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        frame = ctk.CTkFrame(self, fg_color=ThemeColors.BG_SECONDARY)
+        frame = ctk.CTkFrame(self, fg_color=ThemeColors.BG_TERTIARY)
         frame.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
         frame.grid_columnconfigure(0, weight=1)
         frame.grid_rowconfigure(0, weight=1)
@@ -471,4 +505,5 @@ class DataPreviewDialog(BaseDialog):
         count_label.grid(row=1, column=0, pady=5)
 
         ctk.CTkButton(self, text=tr('close'), fg_color=ThemeColors.ACCENT,
+                       text_color="#ffffff", corner_radius=6,
                        command=self.destroy).grid(row=1, column=0, pady=10)

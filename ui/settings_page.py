@@ -13,7 +13,7 @@ from utils.i18n import tr
 
 class SettingsPage(ctk.CTkFrame):
     def __init__(self, parent, **kwargs):
-        super().__init__(parent, fg_color=ThemeColors.BG_PRIMARY, **kwargs)
+        super().__init__(parent, fg_color="transparent", **kwargs)
         self.config = ConfigManager()
         self.db = DatabaseManager()
         self.export_service = ExportService()
@@ -26,11 +26,11 @@ class SettingsPage(ctk.CTkFrame):
         self._load_settings()
 
     def _build_ui(self):
-        header = ctk.CTkLabel(self, text=tr("settings"), font=ctk.CTkFont(size=20, weight="bold"), text_color=ThemeColors.FG_PRIMARY)
-        header.grid(row=0, column=0, sticky="w", padx=20, pady=(20, 10))
+        header = ctk.CTkLabel(self, text=tr("settings"), font=ctk.CTkFont(size=22, weight="bold"), text_color=ThemeColors.FG_PRIMARY)
+        header.grid(row=0, column=0, sticky="w", padx=4, pady=(4, 12))
 
         scroll_frame = ctk.CTkScrollableFrame(self, fg_color="transparent")
-        scroll_frame.grid(row=1, column=0, sticky="nsew", padx=20)
+        scroll_frame.grid(row=1, column=0, sticky="nsew", padx=4)
         scroll_frame.grid_columnconfigure(1, weight=1)
 
         sections = [
@@ -57,8 +57,9 @@ class SettingsPage(ctk.CTkFrame):
         self._entries = {}
         row = 0
         for section_id, section_title, fields in sections:
-            section_frame = ctk.CTkFrame(scroll_frame, fg_color=ThemeColors.BG_SECONDARY, corner_radius=8)
-            section_frame.grid(row=row, column=0, sticky="ew", pady=(0, 15))
+            section_frame = ctk.CTkFrame(scroll_frame, fg_color=ThemeColors.BG_SECONDARY, corner_radius=8,
+                                          border_width=1, border_color=ThemeColors.BORDER)
+            section_frame.grid(row=row, column=0, sticky="ew", pady=(0, 12))
             section_frame.grid_columnconfigure(1, weight=1)
 
             ctk.CTkLabel(section_frame, text=section_title, font=ctk.CTkFont(size=14, weight="bold"), text_color=ThemeColors.ACCENT
@@ -69,7 +70,8 @@ class SettingsPage(ctk.CTkFrame):
                 ctk.CTkLabel(section_frame, text=label, font=ctk.CTkFont(size=12), text_color=ThemeColors.FG_PRIMARY
                 ).grid(row=r, column=0, sticky="w", padx=20, pady=5)
                 show = "*" if is_password else ""
-                entry = ctk.CTkEntry(section_frame, show=show, fg_color=ThemeColors.INPUT_BG)
+                entry = ctk.CTkEntry(section_frame, show=show, fg_color=ThemeColors.BG_PRIMARY,
+                                      border_width=1, border_color=ThemeColors.BORDER)
                 entry.grid(row=r, column=1, sticky="ew", padx=(0, 20), pady=5)
                 self._entries[key] = entry
 
@@ -81,23 +83,24 @@ class SettingsPage(ctk.CTkFrame):
         btn_frame = ctk.CTkFrame(scroll_frame, fg_color="transparent")
         btn_frame.grid(row=row, column=0, pady=10)
 
-        ctk.CTkButton(btn_frame, text=tr("test_connection"), fg_color=ThemeColors.INFO, command=self._test_connection, width=130
-        ).grid(row=0, column=0, padx=5)
-        ctk.CTkButton(btn_frame, text=tr("save_settings"), fg_color=ThemeColors.ACCENT, command=self._save_settings, width=130
-        ).grid(row=0, column=1, padx=5)
-        ctk.CTkButton(btn_frame, text=tr("export_config"), fg_color=ThemeColors.BG_TERTIARY, command=self._export_config, width=130
-        ).grid(row=0, column=2, padx=5)
-        ctk.CTkButton(btn_frame, text=tr("import_config"), fg_color=ThemeColors.BG_TERTIARY, command=self._import_config, width=130
-        ).grid(row=0, column=3, padx=5)
-        ctk.CTkButton(btn_frame, text=tr("reset_to_defaults"), fg_color=ThemeColors.DANGER, command=self._reset_defaults, width=130
-        ).grid(row=0, column=4, padx=5)
+        button_style = {"text_color": "#ffffff", "corner_radius": 6, "height": 32, "width": 130}
+        ctk.CTkButton(btn_frame, text=tr("test_connection"), fg_color=ThemeColors.ACCENT, command=self._test_connection, **button_style
+        ).grid(row=0, column=0, padx=4)
+        ctk.CTkButton(btn_frame, text=tr("save_settings"), fg_color=ThemeColors.SUCCESS, **button_style, command=self._save_settings
+        ).grid(row=0, column=1, padx=4)
+        ctk.CTkButton(btn_frame, text=tr("export_config"), fg_color=ThemeColors.FG_SECONDARY, **button_style, command=self._export_config
+        ).grid(row=0, column=2, padx=4)
+        ctk.CTkButton(btn_frame, text=tr("import_config"), fg_color=ThemeColors.FG_SECONDARY, **button_style, command=self._import_config
+        ).grid(row=0, column=3, padx=4)
+        ctk.CTkButton(btn_frame, text=tr("reset_to_defaults"), fg_color=ThemeColors.DANGER, **button_style, command=self._reset_defaults
+        ).grid(row=0, column=4, padx=4)
 
         self._test_result_label = ctk.CTkLabel(scroll_frame, text="", font=ctk.CTkFont(size=12))
         self._test_result_label.grid(row=row + 1, column=0, pady=5)
 
     def _build_password_toggle(self, parent, row):
         toggle_frame = ctk.CTkFrame(parent, fg_color="transparent")
-        toggle_frame.grid(row=row, column=0, sticky="w", padx=20, pady=5)
+        toggle_frame.grid(row=row, column=0, sticky="w", padx=4, pady=4)
         self._show_passwords = False
 
         def toggle():
@@ -108,7 +111,7 @@ class SettingsPage(ctk.CTkFrame):
                     entry.configure(show=show)
             toggle_btn.configure(text=tr("hide_passwords") if self._show_passwords else tr("show_passwords"))
 
-        toggle_btn = ctk.CTkButton(toggle_frame, text=tr("show_passwords"), fg_color=ThemeColors.BG_TERTIARY, command=toggle, width=130)
+        toggle_btn = ctk.CTkButton(toggle_frame, text=tr("show_passwords"), fg_color=ThemeColors.FG_SECONDARY, text_color="#ffffff", corner_radius=6, command=toggle, width=130)
         toggle_btn.grid(row=0, column=0)
 
     def _load_settings(self):

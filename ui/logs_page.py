@@ -12,7 +12,7 @@ from database.database import DatabaseManager
 
 class LogsPage(ctk.CTkFrame):
     def __init__(self, parent, **kwargs):
-        super().__init__(parent, fg_color=ThemeColors.BG_PRIMARY, **kwargs)
+        super().__init__(parent, fg_color="transparent", **kwargs)
         self.logger = AppLogger()
         self.db = DatabaseManager()
         self.grid_columnconfigure(0, weight=1)
@@ -21,32 +21,36 @@ class LogsPage(ctk.CTkFrame):
 
     def _build_ui(self):
         header_frame = ctk.CTkFrame(self, fg_color="transparent")
-        header_frame.grid(row=0, column=0, sticky="ew", padx=20, pady=(20, 10))
+        header_frame.grid(row=0, column=0, sticky="ew", padx=4, pady=(4, 8))
         header_frame.grid_columnconfigure(0, weight=1)
 
-        ctk.CTkLabel(header_frame, text=tr('logs_page.title'), font=ctk.CTkFont(size=20, weight="bold"), text_color=ThemeColors.FG_PRIMARY
+        ctk.CTkLabel(header_frame, text=tr('logs_page.title'), font=ctk.CTkFont(size=22, weight="bold"), text_color=ThemeColors.FG_PRIMARY
         ).grid(row=0, column=0, sticky="w")
 
         btn_frame = ctk.CTkFrame(header_frame, fg_color="transparent")
         btn_frame.grid(row=0, column=1, sticky="e")
 
-        ctk.CTkButton(btn_frame, text=tr('logs_page.refresh'), fg_color=ThemeColors.BG_TERTIARY, command=self._refresh_logs, width=90
+        ctk.CTkButton(btn_frame, text=tr('logs_page.refresh'), fg_color=ThemeColors.FG_SECONDARY, text_color="#ffffff", corner_radius=6, height=30, command=self._refresh_logs, width=90
         ).grid(row=0, column=0, padx=3)
-        ctk.CTkButton(btn_frame, text=tr('logs_page.export'), fg_color=ThemeColors.BG_TERTIARY, command=self._export_logs, width=90
+        ctk.CTkButton(btn_frame, text=tr('logs_page.export'), fg_color=ThemeColors.ACCENT, text_color="#ffffff", corner_radius=6, height=30, command=self._export_logs, width=90
         ).grid(row=0, column=1, padx=3)
-        ctk.CTkButton(btn_frame, text=tr('logs_page.clear'), fg_color=ThemeColors.DANGER, command=self._clear_logs, width=90
+        ctk.CTkButton(btn_frame, text=tr('logs_page.clear'), fg_color=ThemeColors.DANGER, text_color="#ffffff", corner_radius=6, height=30, command=self._clear_logs, width=90
         ).grid(row=0, column=2, padx=3)
 
         filter_frame = ctk.CTkFrame(self, fg_color="transparent")
-        filter_frame.grid(row=0, column=1, sticky="e", padx=20, pady=(20, 10))
+        filter_frame.grid(row=0, column=1, sticky="e", padx=4, pady=(4, 8))
 
         self.filter_var = ctk.StringVar(value="ALL")
         ctk.CTkOptionMenu(filter_frame, variable=self.filter_var, values=["ALL", "INFO", "SUCCESS", "WARNING", "ERROR"],
-                          fg_color=ThemeColors.INPUT_BG, button_color=ThemeColors.ACCENT, command=lambda _: self._refresh_logs()
+                          fg_color=ThemeColors.BG_SECONDARY, button_color=ThemeColors.ACCENT,
+                          text_color=ThemeColors.FG_PRIMARY, dropdown_fg_color=ThemeColors.BG_SECONDARY,
+                          dropdown_text_color=ThemeColors.FG_PRIMARY, dropdown_hover_color=ThemeColors.BG_TERTIARY,
+                          command=lambda _: self._refresh_logs()
         ).pack()
 
-        main_frame = ctk.CTkFrame(self, fg_color=ThemeColors.BG_SECONDARY, corner_radius=8)
-        main_frame.grid(row=1, column=0, sticky="nsew", padx=20, pady=5)
+        main_frame = ctk.CTkFrame(self, fg_color=ThemeColors.BG_SECONDARY, corner_radius=8,
+                                   border_width=1, border_color=ThemeColors.BORDER)
+        main_frame.grid(row=1, column=0, sticky="nsew", padx=4, pady=4)
         main_frame.grid_columnconfigure(0, weight=1)
         main_frame.grid_rowconfigure(0, weight=1)
 
@@ -55,7 +59,7 @@ class LogsPage(ctk.CTkFrame):
         text_frame.grid_columnconfigure(0, weight=1)
         text_frame.grid_rowconfigure(0, weight=1)
 
-        self.log_text = ctk.CTkTextbox(text_frame, fg_color=ThemeColors.INPUT_BG, font=ctk.CTkFont(size=12, family="Consolas"))
+        self.log_text = ctk.CTkTextbox(text_frame, fg_color=ThemeColors.BG_PRIMARY, font=ctk.CTkFont(size=12, family="Consolas"))
         self.log_text.grid(row=0, column=0, sticky="nsew")
 
         scroll_btn_frame = ctk.CTkFrame(main_frame, fg_color="transparent")
@@ -67,9 +71,9 @@ class LogsPage(ctk.CTkFrame):
         def scroll_down():
             self.log_text.yview_scroll(1, "units")
 
-        ctk.CTkButton(scroll_btn_frame, text="?", width=30, height=20, fg_color=ThemeColors.BG_TERTIARY, command=scroll_up
+        ctk.CTkButton(scroll_btn_frame, text="▲", width=28, height=22, fg_color=ThemeColors.BG_TERTIARY, text_color=ThemeColors.FG_SECONDARY, corner_radius=4, command=scroll_up
         ).pack(pady=2)
-        ctk.CTkButton(scroll_btn_frame, text="?", width=30, height=20, fg_color=ThemeColors.BG_TERTIARY, command=scroll_down
+        ctk.CTkButton(scroll_btn_frame, text="▼", width=28, height=22, fg_color=ThemeColors.BG_TERTIARY, text_color=ThemeColors.FG_SECONDARY, corner_radius=4, command=scroll_down
         ).pack(pady=2)
 
         self.logger.register_callback(self._on_log_entry)

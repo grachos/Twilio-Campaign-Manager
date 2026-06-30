@@ -24,15 +24,10 @@ from ui.dialogs import CampaignDialog, ImportDialog, SelectColumnsDialog, DataPr
 
 
 class CampaignPage(ctk.CTkFrame):
-    """Main campaign management page.
-
-    Provides the full campaign workflow: create, import recipients,
-    map variables, preview messages, send with progress tracking,
-    and view results.
-    """
+    """Main campaign management page — light web style."""
 
     def __init__(self, parent, toolbar, statusbar, **kwargs):
-        super().__init__(parent, fg_color=ThemeColors.BG_PRIMARY, **kwargs)
+        super().__init__(parent, fg_color="transparent", **kwargs)
         self.toolbar = toolbar
         self.statusbar = statusbar
         self.config = ConfigManager()
@@ -65,34 +60,39 @@ class CampaignPage(ctk.CTkFrame):
     def _build_ui(self) -> None:
         # Header and campaign selector
         header_frame = ctk.CTkFrame(self, fg_color="transparent")
-        header_frame.grid(row=0, column=0, sticky="ew", padx=15, pady=(15, 5))
+        header_frame.grid(row=0, column=0, sticky="ew", padx=4, pady=(4, 8))
         header_frame.grid_columnconfigure(2, weight=1)
 
         ctk.CTkLabel(header_frame, text=tr("campaigns"),
-                      font=ctk.CTkFont(size=20, weight="bold"),
-                      text_color=ThemeColors.FG_PRIMARY).grid(row=0, column=0, padx=5)
+                      font=ctk.CTkFont(size=22, weight="bold"),
+                      text_color=ThemeColors.FG_PRIMARY).grid(row=0, column=0, padx=4)
 
         self.campaign_selector = ctk.CTkOptionMenu(
             header_frame, values=[f"✨ {tr('new_campaign')}..."],
-            fg_color=ThemeColors.INPUT_BG, button_color=ThemeColors.ACCENT,
+            fg_color=ThemeColors.BG_SECONDARY, button_color=ThemeColors.ACCENT,
+            text_color=ThemeColors.FG_PRIMARY, dropdown_fg_color=ThemeColors.BG_SECONDARY,
+            dropdown_text_color=ThemeColors.FG_PRIMARY, dropdown_hover_color=ThemeColors.BG_TERTIARY,
             command=self._on_campaign_selected,
         )
-        self.campaign_selector.grid(row=0, column=1, padx=15)
+        self.campaign_selector.grid(row=0, column=1, padx=10)
 
         ctk.CTkButton(header_frame, text=f"➕ {tr('new_campaign')}",
                        fg_color=ThemeColors.ACCENT, hover_color=ThemeColors.ACCENT_HOVER,
-                       command=self._new_campaign).grid(row=0, column=3, padx=5)
+                       text_color="#ffffff", corner_radius=6, height=32,
+                       command=self._new_campaign).grid(row=0, column=3, padx=4)
         self._edit_btn = ctk.CTkButton(header_frame, text=f"✏ {tr('edit')}",
-                                        fg_color=ThemeColors.INFO,
+                                        fg_color=ThemeColors.FG_SECONDARY,
+                                        text_color="#ffffff", corner_radius=6, height=32,
                                         state="disabled", command=self._edit_campaign)
-        self._edit_btn.grid(row=0, column=4, padx=5)
+        self._edit_btn.grid(row=0, column=4, padx=4)
         ctk.CTkButton(header_frame, text=f"🗑 {tr('clear_all')}",
-                       fg_color=ThemeColors.DANGER, hover_color="#c0392b",
-                       command=self._clear_all_campaigns).grid(row=0, column=5, padx=5)
+                       fg_color=ThemeColors.DANGER, text_color="#ffffff", corner_radius=6, height=32,
+                       command=self._clear_all_campaigns).grid(row=0, column=5, padx=4)
 
         # Campaign info bar
-        self.info_bar = ctk.CTkFrame(self, fg_color=ThemeColors.CARD_BG, corner_radius=8)
-        self.info_bar.grid(row=1, column=0, sticky="ew", padx=15, pady=5)
+        self.info_bar = ctk.CTkFrame(self, fg_color=ThemeColors.BG_SECONDARY,
+                                      corner_radius=8, border_width=1, border_color=ThemeColors.BORDER)
+        self.info_bar.grid(row=1, column=0, sticky="ew", padx=4, pady=4)
         self.info_bar.grid_columnconfigure((0, 1, 2, 3, 4), weight=1)
         self._info_labels = {}
         for i, (key, text) in enumerate([
@@ -102,13 +102,15 @@ class CampaignPage(ctk.CTkFrame):
             ("failed", f"{tr('failed')}: 0"),
             ("status", f"{tr('status')}: draft"),
         ]):
-            lbl = ctk.CTkLabel(self.info_bar, text=text, font=ctk.CTkFont(size=12))
+            lbl = ctk.CTkLabel(self.info_bar, text=text, font=ctk.CTkFont(size=12),
+                                text_color=ThemeColors.FG_SECONDARY)
             lbl.grid(row=0, column=i, padx=10, pady=8)
             self._info_labels[key] = lbl
 
         # Main content area with notebook tabs
-        self.notebook = ctk.CTkTabview(self, fg_color=ThemeColors.BG_SECONDARY)
-        self.notebook.grid(row=2, column=0, sticky="nsew", padx=15, pady=5)
+        self.notebook = ctk.CTkTabview(self, fg_color=ThemeColors.BG_SECONDARY,
+                                       border_width=1, border_color=ThemeColors.BORDER)
+        self.notebook.grid(row=2, column=0, sticky="nsew", padx=4, pady=4)
 
         self.recipients_tab = self.notebook.add(tr("recipients"))
         self.preview_tab = self.notebook.add(tr("preview"))
@@ -119,50 +121,55 @@ class CampaignPage(ctk.CTkFrame):
         self._build_results_tab()
 
         # Progress section
-        progress_frame = ctk.CTkFrame(self, fg_color=ThemeColors.BG_SECONDARY, corner_radius=8)
-        progress_frame.grid(row=3, column=0, sticky="ew", padx=15, pady=5)
+        progress_frame = ctk.CTkFrame(self, fg_color=ThemeColors.BG_SECONDARY, corner_radius=8,
+                                       border_width=1, border_color=ThemeColors.BORDER)
+        progress_frame.grid(row=3, column=0, sticky="ew", padx=4, pady=4)
         progress_frame.grid_columnconfigure(3, weight=1)
 
         ctk.CTkLabel(progress_frame, text=f"{tr('progress')}:",
-                      font=ctk.CTkFont(size=12)).grid(row=0, column=0, padx=10, pady=5)
+                      font=ctk.CTkFont(size=12)).grid(row=0, column=0, padx=10, pady=6)
         self.progress_bar = ctk.CTkProgressBar(progress_frame, width=300,
-                                                fg_color=ThemeColors.INPUT_BG,
+                                                fg_color=ThemeColors.BG_TERTIARY,
                                                 progress_color=ThemeColors.ACCENT)
-        self.progress_bar.grid(row=0, column=1, padx=10, pady=5)
+        self.progress_bar.grid(row=0, column=1, padx=10, pady=6)
         self.progress_bar.set(0)
 
         self.progress_label = ctk.CTkLabel(progress_frame, text="0 / 0",
                                             font=ctk.CTkFont(size=12))
-        self.progress_label.grid(row=0, column=2, padx=5, pady=5)
+        self.progress_label.grid(row=0, column=2, padx=5, pady=6)
 
         self.stats_label = ctk.CTkLabel(progress_frame, text="",
                                          font=ctk.CTkFont(size=11),
                                          text_color=ThemeColors.FG_SECONDARY)
-        self.stats_label.grid(row=0, column=3, padx=10, pady=5)
+        self.stats_label.grid(row=0, column=3, padx=10, pady=6)
 
         # Send buttons
         send_frame = ctk.CTkFrame(self, fg_color="transparent")
-        send_frame.grid(row=4, column=0, pady=(5, 15))
+        send_frame.grid(row=4, column=0, pady=(4, 8))
 
         self.start_btn = ctk.CTkButton(send_frame, text=f"▶ {tr('start_sending')}",
-                                        fg_color=ThemeColors.ACCENT, width=140,
+                                        fg_color=ThemeColors.ACCENT, hover_color=ThemeColors.ACCENT_HOVER,
+                                        text_color="#ffffff", corner_radius=6, width=140, height=34,
                                         state="disabled", command=self._start_sending)
-        self.start_btn.grid(row=0, column=0, padx=5)
+        self.start_btn.grid(row=0, column=0, padx=4)
 
         self.pause_btn = ctk.CTkButton(send_frame, text=f"⏸ {tr('pause')}",
-                                        fg_color=ThemeColors.WARNING, width=100,
+                                        fg_color=ThemeColors.WARNING, text_color="#ffffff",
+                                        corner_radius=6, width=100, height=34,
                                         state="disabled", command=self._toggle_pause)
-        self.pause_btn.grid(row=0, column=1, padx=5)
+        self.pause_btn.grid(row=0, column=1, padx=4)
 
         self.cancel_btn = ctk.CTkButton(send_frame, text=f"⏹ {tr('cancel')}",
-                                         fg_color=ThemeColors.DANGER, width=100,
+                                         fg_color=ThemeColors.DANGER, text_color="#ffffff",
+                                         corner_radius=6, width=100, height=34,
                                          state="disabled", command=self._cancel_sending)
-        self.cancel_btn.grid(row=0, column=2, padx=5)
+        self.cancel_btn.grid(row=0, column=2, padx=4)
 
         self.retry_btn = ctk.CTkButton(send_frame, text=f"🔄 {tr('retry_failed')}",
-                                        fg_color=ThemeColors.INFO, width=120,
+                                        fg_color=ThemeColors.ACCENT, text_color="#ffffff",
+                                        corner_radius=6, width=120, height=34,
                                         state="disabled", command=self._retry_failed)
-        self.retry_btn.grid(row=0, column=3, padx=5)
+        self.retry_btn.grid(row=0, column=3, padx=4)
 
         self._refresh_campaign_list()
 
@@ -175,17 +182,19 @@ class CampaignPage(ctk.CTkFrame):
         btn_frame.grid_columnconfigure((0, 1, 2, 3, 4, 5), weight=1)
 
         ctk.CTkButton(btn_frame, text=f"📂 {tr('import_file')}", command=self._import_file,
-                       fg_color=ThemeColors.BG_TERTIARY).grid(row=0, column=0, padx=3)
+                       fg_color=ThemeColors.ACCENT, text_color="#ffffff", corner_radius=6, height=30,
+                       hover_color=ThemeColors.ACCENT_HOVER).grid(row=0, column=0, padx=3)
         ctk.CTkButton(btn_frame, text=f"📋 {tr('paste')}", command=self._import_paste,
-                       fg_color=ThemeColors.BG_TERTIARY).grid(row=0, column=1, padx=3)
+                       fg_color=ThemeColors.ACCENT, text_color="#ffffff", corner_radius=6, height=30,
+                       hover_color=ThemeColors.ACCENT_HOVER).grid(row=0, column=1, padx=3)
         ctk.CTkButton(btn_frame, text=f"🗺 {tr('map_columns')}", command=self._map_columns,
-                       fg_color=ThemeColors.BG_TERTIARY).grid(row=0, column=2, padx=3)
+                       fg_color=ThemeColors.FG_SECONDARY, text_color="#ffffff", corner_radius=6, height=30).grid(row=0, column=2, padx=3)
         ctk.CTkButton(btn_frame, text=f"🔍 {tr('search')}", command=self._search_grid,
-                       fg_color=ThemeColors.BG_TERTIARY).grid(row=0, column=3, padx=3)
+                       fg_color=ThemeColors.FG_SECONDARY, text_color="#ffffff", corner_radius=6, height=30).grid(row=0, column=3, padx=3)
         ctk.CTkButton(btn_frame, text=f"🗑 {tr('delete_row')}", command=self._delete_selected,
-                       fg_color=ThemeColors.DANGER).grid(row=0, column=4, padx=3)
+                       fg_color=ThemeColors.DANGER, text_color="#ffffff", corner_radius=6, height=30).grid(row=0, column=4, padx=3)
         ctk.CTkButton(btn_frame, text=f"📊 {tr('preview_data')}", command=self._preview_data,
-                       fg_color=ThemeColors.BG_TERTIARY).grid(row=0, column=5, padx=3)
+                       fg_color=ThemeColors.FG_SECONDARY, text_color="#ffffff", corner_radius=6, height=30).grid(row=0, column=5, padx=3)
 
         tree_frame = ctk.CTkFrame(self.recipients_tab, fg_color="transparent")
         tree_frame.grid(row=1, column=0, sticky="nsew")
@@ -210,7 +219,7 @@ class CampaignPage(ctk.CTkFrame):
         self.preview_tab.grid_rowconfigure(0, weight=1)
 
         self.preview_text = ctk.CTkTextbox(self.preview_tab, font=ctk.CTkFont(size=13),
-                                            fg_color=ThemeColors.INPUT_BG,
+                                            fg_color=ThemeColors.BG_PRIMARY,
                                             text_color=ThemeColors.FG_PRIMARY)
         self.preview_text.grid(row=0, column=0, sticky="nsew", padx=10, pady=10)
         self.preview_text.insert("1.0", tr("select_campaign_preview"))
@@ -225,9 +234,9 @@ class CampaignPage(ctk.CTkFrame):
         btn_frame.grid_columnconfigure((0, 1, 2), weight=1)
 
         ctk.CTkButton(btn_frame, text=f"🔄 {tr('refresh_status')}", command=self._check_delivery_status,
-                       fg_color=ThemeColors.INFO).grid(row=0, column=0, padx=3)
+                       fg_color=ThemeColors.ACCENT, text_color="#ffffff", corner_radius=6, height=30).grid(row=0, column=0, padx=3)
         ctk.CTkButton(btn_frame, text=f"📤 {tr('export')}", command=self._export_results,
-                       fg_color=ThemeColors.BG_TERTIARY).grid(row=0, column=1, padx=3)
+                       fg_color=ThemeColors.FG_SECONDARY, text_color="#ffffff", corner_radius=6, height=30).grid(row=0, column=1, padx=3)
 
         results_frame = ctk.CTkFrame(self.results_tab, fg_color="transparent")
         results_frame.grid(row=1, column=0, sticky="nsew")
@@ -299,6 +308,7 @@ class CampaignPage(ctk.CTkFrame):
         if results:
             self._imported_columns = list(results[0].variables_used.keys()) if results[0].variables_used else []
         self._populate_grid()
+        self._update_preview()
         self._update_send_button_state()
 
     def _new_campaign(self) -> None:
@@ -339,6 +349,7 @@ class CampaignPage(ctk.CTkFrame):
             self._edit_btn.configure(state="normal")
             self._refresh_campaign_list()
             self._update_info_bar()
+            self._update_preview()
             self._update_send_button_state()
             self.logger.info(f"Campaign created: {dialog.result['name']}")
 
@@ -382,6 +393,7 @@ class CampaignPage(ctk.CTkFrame):
 
             self._refresh_campaign_list()
             self._update_info_bar()
+            self._update_preview()
             self._update_send_button_state()
             self.logger.info(f"Campaign updated: {dialog.result['name']}")
 
@@ -544,12 +556,16 @@ class CampaignPage(ctk.CTkFrame):
     def _search_grid(self) -> None:
         search_win = ctk.CTkToplevel(self)
         search_win.title(tr("search"))
-        search_win.geometry("300x100")
+        search_win.geometry("300x120")
         search_win.transient(self)
         search_win.grab_set()
+        search_win.configure(fg_color=ThemeColors.BG_PRIMARY)
 
-        entry = ctk.CTkEntry(search_win, placeholder_text=tr("search_phone"))
-        entry.pack(padx=20, pady=15, fill="x")
+        ctk.CTkLabel(search_win, text=tr("search_phone"),
+                      font=ctk.CTkFont(size=12)).pack(padx=20, pady=(15, 5), anchor="w")
+        entry = ctk.CTkEntry(search_win, placeholder_text=tr("search_phone"),
+                              fg_color=ThemeColors.BG_SECONDARY, border_width=1, border_color=ThemeColors.BORDER)
+        entry.pack(padx=20, fill="x")
 
         def do_search():
             query = entry.get().strip().lower()
@@ -561,7 +577,8 @@ class CampaignPage(ctk.CTkFrame):
             search_win.destroy()
 
         ctk.CTkButton(search_win, text=tr("search"), command=do_search,
-                       fg_color=ThemeColors.ACCENT).pack(pady=5)
+                       fg_color=ThemeColors.ACCENT, text_color="#ffffff",
+                       corner_radius=6).pack(pady=8)
 
     def _delete_selected(self) -> None:
         selected = self.tree.selection()
@@ -597,7 +614,8 @@ class CampaignPage(ctk.CTkFrame):
         self._update_info_bar()
 
     def _update_preview(self) -> None:
-        if not self._current_campaign or not self._imported_data:
+        if not self._current_campaign:
+            self._set_preview_text(tr("select_campaign_preview"))
             return
 
         template_id = self._current_campaign.get("template_id", 0)
@@ -615,7 +633,7 @@ class CampaignPage(ctk.CTkFrame):
         self._set_preview_text(preview)
 
     def _clear_all_campaigns(self) -> None:
-        if not messagebox.askyesno(tr("clear_all"), tr("clear_all_confirm")):
+        if not messagebox.askyesno(tr("clear_all"), "¿Eliminar TODAS las campañas y sus datos?\nEsto no se puede deshacer."):
             return
         self.db.delete_all_campaigns()
         self._current_campaign = None
@@ -810,27 +828,29 @@ class CampaignPage(ctk.CTkFrame):
 
     @staticmethod
     def _build_history_view(page, parent_frame) -> ctk.CTkFrame:
-        frame = ctk.CTkFrame(parent_frame, fg_color=ThemeColors.BG_PRIMARY)
+        frame = ctk.CTkFrame(parent_frame, fg_color="transparent")
         frame.grid_columnconfigure(0, weight=1)
         frame.grid_rowconfigure(1, weight=1)
 
         ctk.CTkLabel(frame, text=tr("campaign_history"),
-                      font=ctk.CTkFont(size=20, weight="bold"),
-                      text_color=ThemeColors.FG_PRIMARY).grid(row=0, column=0, sticky="w", padx=20, pady=(20, 10))
+                      font=ctk.CTkFont(size=22, weight="bold"),
+                      text_color=ThemeColors.FG_PRIMARY).grid(row=0, column=0, sticky="w", padx=4, pady=(4, 12))
 
         search_frame = ctk.CTkFrame(frame, fg_color="transparent")
-        search_frame.grid(row=0, column=1, sticky="e", padx=20, pady=(20, 10))
-        search_entry = ctk.CTkEntry(search_frame, placeholder_text=tr("search_campaigns"), width=200)
-        search_entry.grid(row=0, column=0, padx=5)
+        search_frame.grid(row=0, column=1, sticky="e", padx=4, pady=(4, 12))
+        search_entry = ctk.CTkEntry(search_frame, placeholder_text=tr("search_campaigns"), width=200,
+                                     fg_color=ThemeColors.BG_SECONDARY, border_width=1, border_color=ThemeColors.BORDER)
+        search_entry.grid(row=0, column=0, padx=4)
 
-        tree_frame = ctk.CTkFrame(frame, fg_color="transparent")
-        tree_frame.grid(row=1, column=0, columnspan=2, sticky="nsew", padx=20, pady=10)
+        tree_frame = ctk.CTkFrame(frame, fg_color=ThemeColors.BG_SECONDARY,
+                                   corner_radius=8, border_width=1, border_color=ThemeColors.BORDER)
+        tree_frame.grid(row=1, column=0, columnspan=2, sticky="nsew", padx=4, pady=4)
         tree_frame.grid_columnconfigure(0, weight=1)
         tree_frame.grid_rowconfigure(0, weight=1)
 
         columns = ["id", "name", "template", "status", "total", "sent", "failed", "duration", "date"]
         tree = ttk.Treeview(tree_frame, columns=columns, show="headings", height=15)
-        tree.grid(row=0, column=0, sticky="nsew")
+        tree.grid(row=0, column=0, sticky="nsew", padx=8, pady=8)
 
         col_widths = {"id": 40, "name": 200, "template": 150, "status": 80,
                        "total": 60, "sent": 60, "failed": 60, "duration": 80, "date": 150}
@@ -872,9 +892,9 @@ class CampaignPage(ctk.CTkFrame):
 
         search_entry.bind("<Return>", lambda e: on_search())
         ctk.CTkButton(search_frame, text=tr("search"), command=on_search,
-                       fg_color=ThemeColors.ACCENT, width=70).grid(row=0, column=1, padx=5)
+                       fg_color=ThemeColors.ACCENT, text_color="#ffffff", corner_radius=6, height=30, width=70).grid(row=0, column=1, padx=4)
         ctk.CTkButton(search_frame, text=tr("refresh"), command=load_history,
-                       fg_color=ThemeColors.BG_TERTIARY, width=70).grid(row=0, column=2, padx=5)
+                       fg_color=ThemeColors.FG_SECONDARY, text_color="#ffffff", corner_radius=6, height=30, width=70).grid(row=0, column=2, padx=4)
 
         load_history()
         return frame
