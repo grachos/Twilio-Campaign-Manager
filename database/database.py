@@ -103,6 +103,17 @@ class DatabaseManager:
                 FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE
             );
 
+            CREATE TABLE IF NOT EXISTS campaign_replies (
+                id              INTEGER PRIMARY KEY AUTOINCREMENT,
+                campaign_id     INTEGER NOT NULL,
+                from_phone      TEXT NOT NULL,
+                body            TEXT DEFAULT '',
+                twilio_sid      TEXT DEFAULT '',
+                received_at     TEXT DEFAULT (datetime('now')),
+                created_at      TEXT DEFAULT (datetime('now')),
+                FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE
+            );
+
             CREATE TABLE IF NOT EXISTS logs (
                 id          INTEGER PRIMARY KEY AUTOINCREMENT,
                 campaign_id INTEGER,
@@ -118,6 +129,8 @@ class DatabaseManager:
                 ON campaign_results(campaign_id);
             CREATE INDEX IF NOT EXISTS idx_campaign_results_status
                 ON campaign_results(status);
+            CREATE INDEX IF NOT EXISTS idx_campaign_replies_campaign
+                ON campaign_replies(campaign_id);
             CREATE INDEX IF NOT EXISTS idx_logs_campaign
                 ON logs(campaign_id);
             CREATE INDEX IF NOT EXISTS idx_logs_timestamp
@@ -337,6 +350,31 @@ class DatabaseManager:
             (campaign_id,),
         )
         return [dict(row) for row in cursor.fetchall()]
+
+    # ----- Campaign Replies -----
+
+    def add_campaign_reply(
+        self, campaign_id: int, from_phone: str,
+        body: str = "", twilio_sid: str = "", received_at: str = ""
+    ) -> int:
+        cursor = self.conn.execute(
+            """INSERT INTO campaign_replies (campaign_id, from_phone, body, twilio_sid, received_at)
+               VALUES (?, ?, ?, ?, ?)""",
+            (campaign_id, from_phone, body, twilio_sid, received_at or datetime.now().isoformat()),
+        )
+        self.conn.commit()
+        return cursor.lastrowid
+
+    def get_campaign_replies(self, campaign_id: int) -> List[Dict[str, Any]]:
+        cursor = self.conn.execute(
+            "SELECT * FROM campaign_replies WHERE campaign_id = ? ORDER BY received_at DESC",
+            (campaign_id,),
+        )
+        return [dict(row) for row in cursor.fetchall()]
+
+    def delete_campaign_replies(self, campaign_id: int) -> None:
+        self.conn.execute("DELETE FROM campaign_replies WHERE campaign_id = ?", (campaign_id,))
+        self.conn.commit()
 
     # ----- Logs -----
 

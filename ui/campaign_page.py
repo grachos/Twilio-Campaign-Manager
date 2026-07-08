@@ -115,10 +115,12 @@ class CampaignPage(ctk.CTkFrame):
         self.recipients_tab = self.notebook.add(tr("recipients"))
         self.preview_tab = self.notebook.add(tr("preview"))
         self.results_tab = self.notebook.add(tr("results"))
+        self.replies_tab = self.notebook.add(tr("replies"))
 
         self._build_recipients_tab()
         self._build_preview_tab()
         self._build_results_tab()
+        self._build_replies_tab()
 
         # Progress section
         progress_frame = ctk.CTkFrame(self, fg_color=ThemeColors.BG_SECONDARY, corner_radius=8,
@@ -256,6 +258,38 @@ class CampaignPage(ctk.CTkFrame):
                                            font=ctk.CTkFont(size=11))
         self.results_count.grid(row=2, column=0, sticky="w", pady=2)
 
+    def _build_replies_tab(self) -> None:
+        self.replies_tab.grid_columnconfigure(0, weight=1)
+        self.replies_tab.grid_rowconfigure(1, weight=1)
+
+        btn_frame = ctk.CTkFrame(self.replies_tab, fg_color="transparent")
+        btn_frame.grid(row=0, column=0, sticky="ew", pady=(5, 0))
+        btn_frame.grid_columnconfigure((0, 1), weight=1)
+
+        self.check_replies_btn = ctk.CTkButton(
+            btn_frame, text=f"📩 {tr('check_replies')}", command=self._check_replies,
+            fg_color=ThemeColors.ACCENT, text_color="#ffffff", corner_radius=6, height=30,
+        )
+        self.check_replies_btn.grid(row=0, column=0, padx=3, sticky="w")
+
+        replies_frame = ctk.CTkFrame(self.replies_tab, fg_color="transparent")
+        replies_frame.grid(row=1, column=0, sticky="nsew")
+        replies_frame.grid_columnconfigure(0, weight=1)
+        replies_frame.grid_rowconfigure(0, weight=1)
+
+        self.replies_tree = ttk.Treeview(replies_frame, show="headings", height=12)
+        self.replies_tree.grid(row=0, column=0, sticky="nsew")
+
+        rvsb = ttk.Scrollbar(replies_frame, orient="vertical", command=self.replies_tree.yview)
+        rhsb = ttk.Scrollbar(replies_frame, orient="horizontal", command=self.replies_tree.xview)
+        self.replies_tree.configure(yscrollcommand=rvsb.set, xscrollcommand=rhsb.set)
+        rvsb.grid(row=0, column=1, sticky="ns")
+        rhsb.grid(row=1, column=0, sticky="ew")
+
+        self.replies_count = ctk.CTkLabel(self.replies_tab, text=f"0 {tr('records')}",
+                                           font=ctk.CTkFont(size=11))
+        self.replies_count.grid(row=2, column=0, sticky="w", pady=2)
+
     def _register_worker_callbacks(self) -> None:
         self.sender_worker.register_progress_callback(self._on_progress_update)
         self.sender_worker.register_log_callback(self._on_worker_log)
@@ -310,6 +344,7 @@ class CampaignPage(ctk.CTkFrame):
         self._populate_grid()
         self._update_preview()
         self._update_send_button_state()
+        self._refresh_replies()
 
     def _new_campaign(self) -> None:
         templates = self.template_service.get_template_names()
@@ -351,6 +386,7 @@ class CampaignPage(ctk.CTkFrame):
             self._update_info_bar()
             self._update_preview()
             self._update_send_button_state()
+            self._refresh_replies()
             self.logger.info(f"Campaign created: {dialog.result['name']}")
 
     def _edit_campaign(self) -> None:
@@ -653,6 +689,9 @@ class CampaignPage(ctk.CTkFrame):
         for item in self.results_tree.get_children():
             self.results_tree.delete(item)
         self.results_count.configure(text=f"0 {tr('records')}")
+        for item in self.replies_tree.get_children():
+            self.replies_tree.delete(item)
+        self.replies_count.configure(text=f"0 {tr('records')}")
         self._set_preview_text(tr("select_campaign_preview"))
         self.logger.info("All campaigns cleared")
 
@@ -820,6 +859,59 @@ class CampaignPage(ctk.CTkFrame):
             except Exception as e:
                 from tkinter import messagebox
                 messagebox.showerror(tr("error"), str(e))
+
+    def _check_replies(self) -> None:
+        if not self._current_campaign:
+            return
+        campaign_id = self._current_campaign["id"]
+        self.check_replies_btn.configure(state="disabled", text=tr("checking_replies"))
+        self.update()
+
+        def task():
+            count = self.campaign_service.fetch_and_store_replies(campaign_id, since_minutes=1440)
+            self.after(0, lambda: self._on_replies_checked(count))
+
+        threading.Thread(target=task, daemon=True).start()
+
+    def _on_replies_checked(self, count: int) -> None:
+        self.check_replies_btn.configure(state="normal", text=f"📩 {tr('check_replies')}")
+        self._refresh_replies()
+        if count:
+            self.logger.info(tr("replies_found").format(count=count))
+            self.statusbar.set_status(tr("replies_found").format(count=count))
+
+    def _refresh_replies(self) -> None:
+        if not self._current_campaign:
+            return
+        campaign_id = self._current_campaign["id"]
+        replies = self.campaign_service.get_campaign_replies(campaign_id)
+
+        if not replies:
+            self.replies_tree["columns"] = ["from_phone", "body", "received_at"]
+            for col in self.replies_tree["columns"]:
+                self.replies_tree.heading(col, text=col.replace("_", " ").title())
+                self.replies_tree.column(col, width=200)
+            for item in self.replies_tree.get_children():
+                self.replies_tree.delete(item)
+            self.replies_count.configure(text=f"0 {tr('records')}")
+            return
+
+        columns = ["from_phone", "body", "received_at"]
+        self.replies_tree["columns"] = columns
+        for col in columns:
+            heading = tr("from_phone") if col == "from_phone" else tr("message_body_col") if col == "body" else tr("reply_received")
+            self.replies_tree.heading(col, text=heading)
+            widths = {"from_phone": 180, "body": 350, "received_at": 180}
+            self.replies_tree.column(col, width=widths.get(col, 150), minwidth=80)
+
+        for item in self.replies_tree.get_children():
+            self.replies_tree.delete(item)
+
+        for r in replies:
+            values = [r.get("from_phone", ""), r.get("body", ""), r.get("received_at", "")]
+            self.replies_tree.insert("", "end", values=values)
+
+        self.replies_count.configure(text=f"{len(replies)} {tr('records')}")
 
     def refresh(self) -> None:
         self._refresh_campaign_list()

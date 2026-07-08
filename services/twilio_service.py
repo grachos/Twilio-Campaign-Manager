@@ -1,6 +1,7 @@
 import json
 import time
 from typing import Optional, Dict, Any, Tuple, List
+from datetime import datetime, timedelta
 from twilio.rest import Client
 from twilio.base.exceptions import TwilioRestException
 
@@ -145,6 +146,49 @@ class TwilioService:
             return False, "error", e.msg or str(e)
         except Exception as e:
             return False, "error", str(e)
+
+    def fetch_incoming_replies(
+        self, since_minutes: int = 60, to_number: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
+        """Fetch incoming messages (replies) sent TO our Twilio number.
+
+        Uses client.messages.list() filtered by direction='inbound'
+        and date_sent_after. Returns list of reply dicts with
+        from_, body, sid, date_sent keys.
+        """
+        client = self.client
+        if not client:
+            return []
+
+        if to_number is None:
+            to_number = self.config.get("DEFAULT_SENDER", "")
+
+        if not to_number:
+            return []
+
+        since = datetime.utcnow() - timedelta(minutes=since_minutes)
+        try:
+            messages = client.messages.list(
+                to=to_number,
+                date_sent_after=since,
+                limit=200,
+            )
+            replies = []
+            for msg in messages:
+                if msg.direction == "inbound":
+                    replies.append({
+                        "from_": msg.from_,
+                        "body": msg.body,
+                        "sid": msg.sid,
+                        "date_sent": msg.date_sent.isoformat() if msg.date_sent else "",
+                    })
+            return replies
+        except TwilioRestException as e:
+            self.logger.error(f"Failed to fetch replies: {e.msg or str(e)}")
+            return []
+        except Exception as e:
+            self.logger.error(f"Failed to fetch replies: {e}")
+            return []
 
     def send_batch(
         self,

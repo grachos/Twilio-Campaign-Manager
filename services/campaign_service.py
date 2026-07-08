@@ -121,6 +121,45 @@ class CampaignService:
                 changes += 1
         return changes
 
+    def fetch_and_store_replies(self, campaign_id: int, since_minutes: int = 1440) -> int:
+        """Fetch incoming replies from Twilio for a campaign's recipients.
+        Matches replies by sender phone number against campaign recipients.
+        Returns count of new replies stored.
+        """
+        to_number = self.config.get("DEFAULT_SENDER", "")
+        replies = self.twilio_service.fetch_incoming_replies(since_minutes=since_minutes, to_number=to_number)
+
+        if not replies:
+            return 0
+
+        results = self.db.get_sent_results_with_sid(campaign_id)
+        recipient_phones = {r["phone"] for r in results}
+
+        existing = self.db.get_campaign_replies(campaign_id)
+        existing_sids = {r["twilio_sid"] for r in existing}
+
+        stored = 0
+        for reply in replies:
+            if reply["sid"] in existing_sids:
+                continue
+            from_phone = reply.get("from_", "")
+            if from_phone in recipient_phones:
+                self.db.add_campaign_reply(
+                    campaign_id=campaign_id,
+                    from_phone=from_phone,
+                    body=reply.get("body", ""),
+                    twilio_sid=reply["sid"],
+                    received_at=reply.get("date_sent", ""),
+                )
+                stored += 1
+
+        if stored:
+            self.logger.info(f"Stored {stored} new replies for campaign (ID: {campaign_id})")
+        return stored
+
+    def get_campaign_replies(self, campaign_id: int) -> List[Dict[str, Any]]:
+        return self.db.get_campaign_replies(campaign_id)
+
     def get_dashboard_stats(self) -> Dict[str, Any]:
         return self.db.get_dashboard_stats()
 
