@@ -1,5 +1,6 @@
 import json
 import os
+import sys
 import base64
 from pathlib import Path
 from typing import Optional, Dict, Any
@@ -10,7 +11,23 @@ from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 
-load_dotenv()
+def _get_app_root() -> Path:
+    """Return the directory where the app stores its data files.
+    
+    When running as .exe, uses the exe's directory.
+    When running as script, uses the project root.
+    """
+    if getattr(sys, 'frozen', False):
+        return Path(sys.executable).parent.resolve()
+    return Path(__file__).resolve().parent.parent
+
+
+_app_root = _get_app_root()
+_load_env_path = _app_root / ".env"
+if _load_env_path.exists():
+    load_dotenv(_load_env_path)
+else:
+    load_dotenv()
 
 
 class ConfigManager:
@@ -18,6 +35,9 @@ class ConfigManager:
 
     Loads environment variables, manages encrypted credential storage,
     and provides a centralized settings dictionary backed by SQLite.
+    
+    Data files (.env, .key, campaign_manager.db) are stored in the
+    same directory as the executable for easy portability.
     """
 
     _instance: Optional["ConfigManager"] = None
@@ -38,7 +58,7 @@ class ConfigManager:
         self._init_encryption()
 
     def _load_defaults(self) -> None:
-        base_dir = Path(__file__).resolve().parent.parent
+        base_dir = _app_root
         self._config.update({
             "APP_NAME": "Twilio Campaign Manager",
             "APP_VERSION": "1.0.0",
@@ -56,8 +76,8 @@ class ConfigManager:
             "RETRY_ATTEMPTS": int(os.getenv("RETRY_ATTEMPTS", "3")),
             "DELAY_BETWEEN_MSGS": float(os.getenv("DELAY_BETWEEN_MSGS", "0.5")),
             "MAX_PARALLEL_WORKERS": int(os.getenv("MAX_PARALLEL_WORKERS", "5")),
-            "THEME_MODE": "Dark",
-            "COLOR_THEME": "green",
+            "THEME_MODE": "Light",
+            "COLOR_THEME": "blue",
         })
 
     def _init_encryption(self) -> None:
