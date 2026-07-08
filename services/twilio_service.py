@@ -166,6 +166,9 @@ class TwilioService:
         if not to_number:
             return []
 
+        if not str(to_number).startswith("whatsapp:"):
+            to_number = f"whatsapp:{to_number}"
+
         since = datetime.utcnow() - timedelta(minutes=since_minutes)
         try:
             messages = client.messages.list(

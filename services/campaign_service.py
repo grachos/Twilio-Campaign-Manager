@@ -143,7 +143,9 @@ class CampaignService:
             if reply["sid"] in existing_sids:
                 continue
             from_phone = reply.get("from_", "")
-            if from_phone in recipient_phones:
+            # Strip whatsapp: prefix for matching — DB stores phones without it
+            match_phone = from_phone.replace("whatsapp:", "")
+            if match_phone in recipient_phones:
                 self.db.add_campaign_reply(
                     campaign_id=campaign_id,
                     from_phone=from_phone,
@@ -155,6 +157,8 @@ class CampaignService:
 
         if stored:
             self.logger.info(f"Stored {stored} new replies for campaign (ID: {campaign_id})")
+        else:
+            self.logger.info(f"No matching replies found for campaign (ID: {campaign_id})")
         return stored
 
     def get_campaign_replies(self, campaign_id: int) -> List[Dict[str, Any]]:
